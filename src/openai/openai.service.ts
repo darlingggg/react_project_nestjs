@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import OpenAI from 'openai'
 import type { AiObject } from './message.interface'
-import { OPENAI_API_KEY, OPENAI_BASE_URL } from '../../key'
+import { OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL } from '../../key'
 
 @Injectable()
 export class OpenaiService {
@@ -16,7 +16,7 @@ export class OpenaiService {
 
   async createStream(prompt: AiObject) {
     const stream = await this.openai.chat.completions.create({
-      model: 'kimi-k2.5',
+      model: OPENAI_MODEL,
       messages: [
         {
           role: 'system',
