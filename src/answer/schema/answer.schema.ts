@@ -1,18 +1,19 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { HydratedDocument } from 'mongoose'
+import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm'
 
-export type AnswerDocument = HydratedDocument<Answer>
-
-@Schema()
+@Entity('answers')
 export class Answer {
-  @Prop({ required: true })
+  @PrimaryColumn({ type: 'varchar', length: 64 })
+  _id: string
+
+  @Column({ type: 'varchar', length: 64 })
   questionId: string
 
-  @Prop()
+  @Column({ type: 'json', nullable: true })
   answerList: {
     componentId: string
     value: string
   }[]
-}
 
-export const AnswerSchema = SchemaFactory.createForClass(Answer)
+  @CreateDateColumn({ type: 'datetime' })
+  createdAt: Date
+}

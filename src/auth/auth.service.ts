@@ -15,7 +15,7 @@ export class AuthService {
       throw new UnauthorizedException('用户名或密码错误')
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: p, ...userInfo } = user.toObject()
+    const { password: p, ...userInfo } = user
     return { token: this.jwtService.sign(userInfo) }
   }
 }

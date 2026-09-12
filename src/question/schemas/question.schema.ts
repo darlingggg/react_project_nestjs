@@ -1,41 +1,41 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { HydratedDocument } from 'mongoose'
+import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm'
 
-export type QuestionDocument = HydratedDocument<Question>
-
-@Schema()
+@Entity('questions')
 export class Question {
-  @Prop({ required: true })
+  @PrimaryColumn({ type: 'varchar', length: 64 })
+  _id: string
+
+  @Column({ type: 'varchar', length: 255 })
   title: string
 
-  @Prop()
+  @Column({ type: 'text', nullable: true })
   desc: string
 
-  @Prop()
+  @Column({ type: 'text', nullable: true })
   js: string
 
-  @Prop()
+  @Column({ type: 'text', nullable: true })
   css: string
 
-  @Prop({ default: false })
+  @Column({ type: 'boolean', default: false })
   isPublished: boolean
 
-  @Prop({ default: false })
+  @Column({ type: 'boolean', default: false })
   isDeleted: boolean
 
-  @Prop({ default: false })
+  @Column({ type: 'boolean', default: false })
   isStar: boolean
 
-  @Prop({ required: true })
+  @Column({ type: 'varchar', length: 100 })
   author: string
 
-  @Prop({ default: 0 })
+  @Column({ type: 'int', default: 0 })
   answerCount: number
 
-  @Prop()
+  @CreateDateColumn({ type: 'datetime' })
   createdAt: Date
 
-  @Prop()
+  @Column({ type: 'json', nullable: true })
   componentList: {
     fe_id: string
     type: string
@@ -45,5 +45,3 @@ export class Question {
     props: object
   }[]
 }
-
-export const QuestionSchema = SchemaFactory.createForClass(Question)

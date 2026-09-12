@@ -2,20 +2,29 @@ import { Module } from '@nestjs/common'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { QuestionModule } from './question/question.module'
-import { MongooseModule } from '@nestjs/mongoose'
+import { TypeOrmModule } from '@nestjs/typeorm'
 import { ConfigModule } from '@nestjs/config'
 import { UserModule } from './user/user.module'
 import { AuthModule } from './auth/auth.module'
 import { AnswerModule } from './answer/answer.module'
 import { StatModule } from './stat/stat.module'
-import { OpenaiModule } from './openai/openai.module';
+import { OpenaiModule } from './openai/openai.module'
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     QuestionModule,
-    // MongooseModule.forRoot('mongodb://127.0.0.1:27017/react_nestdb'),
-    MongooseModule.forRoot(`mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DATABASE}`),
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: process.env.MYSQL_HOST || '127.0.0.1',
+      port: Number(process.env.MYSQL_PORT || 3306),
+      username: process.env.MYSQL_USER || 'root',
+      password: process.env.MYSQL_PASSWORD || '123456',
+      database: process.env.MYSQL_DATABASE || 'react_nestdb',
+      autoLoadEntities: true,
+      synchronize: process.env.NODE_ENV !== 'production',
+      charset: 'utf8mb4',
+    }),
     UserModule,
     AuthModule,
     AnswerModule,

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
-import { InjectModel } from '@nestjs/mongoose'
+import { InjectRepository } from '@nestjs/typeorm'
 import { Question } from './schemas/question.schema'
-import mongoose, { FilterQuery, Model } from 'mongoose'
+import { Repository, Like, In, FindOptionsWhere } from 'typeorm'
 import { nanoid } from 'nanoid'
 import { AnswerService } from 'src/answer/answer.service'
 
@@ -9,16 +9,17 @@ import { AnswerService } from 'src/answer/answer.service'
 export class QuestionService {
   // 依赖注入
   constructor(
-    @InjectModel(Question.name) private readonly questionModel: Model<Question>,
+    @InjectRepository(Question) private readonly questionModel: Repository<Question>,
     private readonly answerService: AnswerService
   ) {}
 
   async create(username: string) {
-    const question = new this.questionModel({
+    const question = this.questionModel.create({
+      _id: nanoid(24),
       title: '问卷标题' + Date.now(),
       desc: '问卷描述',
       author: username,
-      createdAt: Date.now(),
+      createdAt: new Date(),
       componentList: [
         {
           fe_id: nanoid(),
@@ -28,33 +29,30 @@ export class QuestionService {
         },
       ],
     })
-    return await question.save()
+    return await this.questionModel.save(question)
   }
 
   async delete(id: string, author: string) {
-    return await this.questionModel.findOneAndDelete({ _id: id, author })
+    const question = await this.questionModel.findOne({ where: { _id: id, author } })
+    return question ? await this.questionModel.remove(question) : null
   }
 
   async deleteMany(ids: string[], author: string) {
-    return await this.questionModel.deleteMany({ _id: { $in: ids }, author })
+    return await this.questionModel.delete({ _id: In(ids), author })
   }
 
   async findOne(id: string) {
-    return await this.questionModel.findById(id)
+    return await this.questionModel.findOne({ where: { _id: id } })
   }
 
   async update(id: string, updateData: Question, author: string) {
-    return await this.questionModel.updateOne({ _id: id, author }, updateData)
+    return await this.questionModel.update({ _id: id, author }, updateData)
   }
 
   async findAllList({ keyword = '', page = 1, pageSize = 10, isDeleted = false, isStar, author = '' }) {
-    const whereOpt: FilterQuery<Question> = { author, isDeleted }
+    const whereOpt: FindOptionsWhere<Question> = { author, isDeleted }
     if (isStar !== undefined) whereOpt.isStar = isStar as boolean
-
-    if (keyword) {
-      const reg = new RegExp(keyword, 'i')
-      whereOpt.title = { $regex: reg } // 模糊搜索
-    }
+    if (keyword) whereOpt.title = Like(`%${keyword}%`)
     const answers = await this.answerService.getAll()
     const map = new Map()
     answers.forEach(item => {
@@ -64,11 +62,7 @@ export class QuestionService {
         map.set(item.questionId, 1)
       }
     })
-    const res = await this.questionModel
-      .find(whereOpt)
-      .sort({ _id: -1 }) // 根据_id进行降序排序(从大到小)
-      .skip((page - 1) * pageSize) // 跳过前 (page-1)*pageSize条数据
-      .limit(pageSize) // 限制返回条数
+    const res = await this.questionModel.find({ where: whereOpt, order: { createdAt: 'DESC' }, skip: (page - 1) * pageSize, take: pageSize })
     res.forEach(item => {
       const id = item._id.toString()
       item.answerCount = (map.get(id) as number) || 0
@@ -77,21 +71,20 @@ export class QuestionService {
   }
 
   async count({ keyword = '', isDeleted = false, isStar, author = '' }) {
-    const whereOpt: FilterQuery<Question> = { author, isDeleted }
+    const whereOpt: FindOptionsWhere<Question> = { author, isDeleted }
     if (isStar !== undefined) whereOpt.isStar = isStar as boolean
     if (keyword) {
-      const reg = new RegExp(keyword, 'i')
-      whereOpt.title = { $regex: reg } // 模糊搜索
+      whereOpt.title = Like(`%${keyword}%`)
     }
-    return await this.questionModel.countDocuments(whereOpt)
+    return await this.questionModel.count({ where: whereOpt })
   }
 
   async duplicate(id: string, author: string) {
-    const question = await this.questionModel.findById(id)
+    const question = await this.questionModel.findOne({ where: { _id: id } })
     if (!question) return null
-    const newQuestion = new this.questionModel({
-      ...question.toObject(),
-      _id: new mongoose.Types.ObjectId(),
+    const newQuestion = this.questionModel.create({
+      ...question,
+      _id: nanoid(24),
       title: question.title + ' 副本',
       author,
       isPublished: false,
@@ -100,12 +93,12 @@ export class QuestionService {
         return { ...item, fe_id: nanoid() }
       }),
     })
-    return await newQuestion.save()
+    return await this.questionModel.save(newQuestion)
   }
 
   async AllCount() {
-    const totalQuestions = await this.questionModel.countDocuments()
-    const totalPublished = await this.questionModel.countDocuments({ isPublished: true })
+    const totalQuestions = await this.questionModel.count()
+    const totalPublished = await this.questionModel.count({ where: { isPublished: true } })
     return { totalQuestions, totalPublished }
   }
 }

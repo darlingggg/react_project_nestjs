@@ -1,17 +1,22 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { HydratedDocument } from 'mongoose'
+import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm'
 
-export type UserDocument = HydratedDocument<User>
-
-@Schema({ timestamps: true }) // 记录时间戳
+@Entity('users')
 export class User {
-  @Prop({ required: true, unique: true })
+  @PrimaryColumn({ type: 'varchar', length: 64 })
+  _id: string
+
+  @Column({ type: 'varchar', length: 100, unique: true })
   username: string
 
-  @Prop({ required: true })
+  @Column({ type: 'varchar', length: 255 })
   password: string
 
-  @Prop()
+  @Column({ type: 'varchar', length: 255, nullable: true })
   nickname?: string
+
+  @CreateDateColumn({ type: 'datetime' })
+  createdAt: Date
+
+  @UpdateDateColumn({ type: 'datetime' })
+  updatedAt: Date
 }
-export const UserSchema = SchemaFactory.createForClass(User)
