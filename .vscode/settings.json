@@ -1,0 +1,16 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "cSpell.words": [
+    "ahooks",
+    "downarrow",
+    "kimi",
+    "nestdb",
+    "Popconfirm",
+    "qrcode",
+    "undoable",
+    "unplugin",
+    "uparrow"
+  ]
+}
